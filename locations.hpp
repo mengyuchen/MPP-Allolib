@@ -7,6 +7,7 @@
 #include "location_base.hpp"
 #include "agents.hpp"
 
+
 //reference: Platonic Solids by Lance Putnam
 
 using namespace al;
@@ -79,13 +80,15 @@ struct MetroBuilding : Location{
         mesh_Nv = addCube(mesh);
         addCube(mesh_wire);
         for(int i=0; i<mesh_Nv; ++i){
-			float f = float(i)/mesh_Nv;
-			mesh.color(HSV(0.06 + f*0.1,0.8,1));
+            float f = float(i)/mesh_Nv;
+            mesh.color(HSV(0.06 + f*0.1,0.8,1));
             mesh_wire.color(HSV(0.06 + f*0.1,0.8,1));
-		}
-        mesh_wire.primitive(Mesh::LINE_LOOP);
+        }
         mesh.decompress();
         mesh.generateNormals();
+
+
+        // mesh_wire.primitive(Mesh::LINE_LOOP);
         //c = HSV(rnd::uniform(), 0.7, 1);
     }
 
@@ -99,14 +102,18 @@ struct MetroBuilding : Location{
         
         //floating little bit
     }
+
     void draw(Graphics& g) {
         g.pushMatrix();
         g.translate(position);
         g.scale(scaleFactor, scaleFactor, scaleZvalue);
-        g.color(c);
+        g.meshColor();
+        g.polygonMode(Graphics::FILL);
         g.draw(mesh);
         g.scale(1.4);
+        g.polygonMode(Graphics::LINE);
         g.draw(mesh_wire);
+        g.polygonMode(Graphics::FILL);
         g.popMatrix();
     }
 };
@@ -297,8 +304,12 @@ struct Factory : Location{
         g.rotate(angle1, 0,0,1);
         g.scale(scaleFactor);
         g.color(c);
+        g.polygonMode(Graphics::FILL);
         g.draw(mesh);
+        g.polygonMode(Graphics::LINE);
         g.draw(mesh_wire);
+        g.polygonMode(Graphics::FILL);
+        
         g.popMatrix();
     }
 };
@@ -337,7 +348,7 @@ struct Natural_Resource_Point : Location{
 			mesh.color(HSV(f*0.1,1,1));
             mesh_wire.color(HSV(f*0.1,1,1));
 		}
-        mesh_wire.primitive(Mesh::LINE_LOOP);
+        // mesh_wire.primitive(Mesh::LINE_LOOP);
         mesh.decompress();
         mesh.generateNormals();
         //c = HSV(rnd::uniform(), 0.7, 1);
@@ -455,6 +466,7 @@ struct Natural_Resource_Point : Location{
     }
 
     void draw(Graphics& g) {
+        g.meshColor();
         for (int i = resources.size() - 1; i >= 0; i--){
             Resource& r = resources[i];
             if (!r.isPicked){
@@ -463,12 +475,14 @@ struct Natural_Resource_Point : Location{
                 g.rotate(r.angle2, 1,0,0);
                 g.rotate(r.angle1, 0,1,0);
                 g.scale(scaleFactor);
+                g.polygonMode(Graphics::FILL);
                 g.draw(mesh);
+                g.polygonMode(Graphics::LINE);
                 g.draw(mesh_wire);
                 g.popMatrix();
             }
         }
-        
+        g.polygonMode(Graphics::FILL);        
     }
 };
 

@@ -8,8 +8,8 @@ struct Location{
     Vec3f position;
     float scaleFactor;
     Color c;
-    VAOMesh mesh;
-    VAOMesh mesh_wire;
+    Mesh mesh;
+    Mesh mesh_wire;
 };
 
 #endif

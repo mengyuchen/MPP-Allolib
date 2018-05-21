@@ -380,11 +380,13 @@ struct Capitalist : Agent{
     }
 
     void draw(Graphics& g){
+
         g.pushMatrix();
         g.translate(pose().pos());
         g.rotate(pose().quat());
         g.scale(scaleFactor);
         if (!bankrupted()){
+            g.meshColor();
             g.draw(body);
         }
         g.popMatrix();
@@ -804,7 +806,9 @@ struct Miner : Agent {
         g.rotate(pose().quat());
         g.scale(scaleFactor);
         if (!bankrupted()){
+            g.meshColor();
             if (resourceHoldings >= 12){ g.draw(resource);}
+            if (true){ g.draw(resource);}
             g.draw(body);
         }
         g.popMatrix();
@@ -1256,6 +1260,7 @@ struct Worker : Agent {
         g.rotate(pose().quat());
         g.scale(scaleFactor);
         if (!bankrupted()){
+            g.meshColor();
             g.draw(body);
         }
         g.popMatrix();

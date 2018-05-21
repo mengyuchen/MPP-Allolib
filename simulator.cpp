@@ -50,7 +50,7 @@ struct MyApp : DistributedApp<State> {
 
     //market manager
     MarketManager marketManager;
-    DynamicScene scene;
+    // DynamicScene scene;
 
 //    //for cuttlebone
 //    State state;
@@ -75,7 +75,9 @@ struct MyApp : DistributedApp<State> {
     //background noise
     Mesh geom;
 
-    MyApp()    {
+
+
+    void onCreate() override {
         
         light.pos(0, 0, 0);              // place the light
         nav().pos(0, 0, 50);             // place the viewer //80
@@ -156,7 +158,8 @@ struct MyApp : DistributedApp<State> {
 
         
     }
-    void onAnimate(double dt) {
+
+    void onAnimate(double dt) override {
         //shader phase
         //phase += 0.00017; if(phase>=1) --phase;
         //this updates your nav, especially you use a controller / joystick
@@ -313,30 +316,39 @@ struct MyApp : DistributedApp<State> {
         }
    
     }
-    void onDraw(Graphics& g) {
+    void onDraw(Graphics& g) override {
         g.clear(bgColor);
         if (renderModeSwitch == 1){
             // FIXME AC put back fog
 //            g.fog(lens().far() * 2, lens().far(), background());
-            g.blendSub();
+            g.depthTesting(false);
+            g.blending(true);
+            g.blendModeSub();
             
         } else if (renderModeSwitch == 2){
             //g.fog(lens().far(), lens().near(), background());
-            g.blendAdd();
+            g.depthTesting(false);
+            g.blending(true);
+            g.blendModeAdd();
         } else if (renderModeSwitch == 3) {
 
             // FIXME AC put back fog
 //            g.fog(lens().far(), lens().near()+2, background());
+            g.depthTesting(true);
             g.blending(false);
-            shader.begin();
+            // shader.begin();
 			//shader.uniform("fogCurve", 4*cos(8*phase*6.2832));
         }
         // FIXME AC put back light and material
 //            light();
 //            material();
+
+        g.lighting(true);
+        g.light(light);
+        
             
             //glEnable(GL_POINT_SPRITE);
-            scene.render(g);
+            // scene.render(g);
             //draw all the entities
             metropolis.draw(g);
             factories.draw(g);
@@ -345,14 +357,14 @@ struct MyApp : DistributedApp<State> {
             miners.draw(g);
             workers.draw(g);
             g.draw(geom);
-        if (renderModeSwitch == 3){
-            shader.end();
-        }
+        // if (renderModeSwitch == 3){
+        //     shader.end();
+        // }
 
     }
-    virtual void onSound(AudioIOData& io) {
-        scene.listenerPose(nav());
-        scene.render(io);
+    void onSound(AudioIOData& io) override {
+        // scene.listenerPose(nav());
+        // scene.render(io);
 //        int numFrames = io.framesPerBuffer();
 //        for (int k = 0; k < numFrames; k++) {
 //            //capitalist sample
@@ -377,7 +389,8 @@ struct MyApp : DistributedApp<State> {
         
 //        v_scene.render(io);
     }
-    void onKeyDown(const Keyboard& k) {
+
+    void onKeyDown(const Keyboard& k) override {
         switch(k.key()){
             case '7': factories.drawingLinks = !factories.drawingLinks; break;
             case '8': miners.drawingLinks = !miners.drawingLinks; break;
