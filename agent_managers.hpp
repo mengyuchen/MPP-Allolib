@@ -12,6 +12,7 @@ struct Capitalist_Entity{
     Capitalist_Entity(){
         initial_num = 15;
         cs.resize(initial_num);
+        cout << "Capitalist Entity Joined" << endl;
 
     }
     Capitalist operator[] (const int index) const{
@@ -80,6 +81,7 @@ struct Worker_Union{
         workers.resize(initial_num);
         lines.resize(workers.size());
         drawingLinks = true;
+        cout << "Worker Union joined" << endl;
     }
     Worker operator[] (const int index) const{
         return workers[index];
@@ -141,12 +143,13 @@ struct Miner_Group{
         ms.resize(initial_num);
         lines.resize(ms.size());
         drawingLinks = true;
-
+        cout << "Miner Group joined" << endl;
     }
     Miner operator[] (const int index) const{
         return ms[index];
     }
     void run(vector<Natural_Resource_Point>& nrps, vector<Miner>& others, vector<Capitalist>& capitalists){
+        //cout << "Miner Group running fast" << endl;
         for (int i = ms.size() - 1; i >=0; i --){
             Miner& m = ms[i];
             if (!m.bankrupted()){

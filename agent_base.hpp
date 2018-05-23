@@ -4,16 +4,16 @@
 #include "al/core/app/al_App.hpp"
 #include "al/core/graphics/al_VAOMesh.hpp"
 
-// #include "al/util/scene/al_DynamicScene.hpp"
+#include "al/util/scene/al_DynamicScene.hpp"
 
-#define TESTING_WITHOUT_DYNAMIC_SCENE 1
+#define TESTING_WITHOUT_DYNAMIC_SCENE 0
 
 float boundary_radius = 90.0f;
 
 using namespace al;
 
-// class Agent : public PositionedVoice {
-class Agent {
+class Agent : public PositionedVoice {
+//class Agent {
 public:
     Vec3f velocity, acceleration;
     Color c;
@@ -42,14 +42,13 @@ public:
     float incomeTax;
     float povertyWelfare;
     Vec3f movingTarget;
+// #if TESTING_WITHOUT_DYNAMIC_SCENE
+//     Pose pose() {
+//         return Pose();
+//     }
 
-#if TESTING_WITHOUT_DYNAMIC_SCENE
-    Pose pose() {
-        return Pose();
-    }
-
-    virtual void onProcess(AudioIOData& io) {}
-#endif
+//     virtual void onProcess(AudioIOData& io) {}
+// #endif
 
     void update(){
         velocity += acceleration;

@@ -15,6 +15,7 @@
 #include "Gamma/Noise.h"
 #include "Gamma/Oscillator.h"
 #include "Gamma/SamplePlayer.h"
+
 //#include "alloutil/al_AlloSphereAudioSpatializer.hpp"
 //#include "alloutil/al_Simulator.hpp"
 
@@ -241,6 +242,7 @@ struct Capitalist : Agent{
 
     void run(vector<MetroBuilding>& mbs){
         //cout << capitalHoldings << "i m capitalist" << endl;
+        //cout << "capitalistss??" << endl;
         //basic behaviors
         Vec3f ahb(avoidHittingBuilding(mbs));
         ahb *= 0.8;

@@ -26,12 +26,12 @@ using namespace std;
 
  //Vbap audio spatializer
 //static AudioScene  v_scene(BLOCK_SIZE); //to not confuse with scene()
-static SpeakerLayout speakerLayout;
-    //Vbap* panner;
-static Spatializer *panner;
-//static StereoPanner *panner;
-static Listener *listener;
-static SoundSource *source[15];
+// static SpeakerLayout speakerLayout;
+//     //Vbap* panner;
+// static Spatializer *panner;
+// //static StereoPanner *panner;
+// static Listener *listener;
+// static SoundSource *source[15];
 //static SoundSource *sourceWorker[75];
 
 struct MyApp : DistributedApp<State> {
@@ -50,7 +50,7 @@ struct MyApp : DistributedApp<State> {
 
     //market manager
     MarketManager marketManager;
-    // DynamicScene scene;
+    DynamicScene scene;
 
 //    //for cuttlebone
 //    State state;
@@ -69,13 +69,16 @@ struct MyApp : DistributedApp<State> {
     int cameraSwitch = 0;
 
     //shader
-    ShaderProgram shader;
+    //ShaderProgram shader;
     float phase;
 
     //background noise
     Mesh geom;
 
-
+    void onInit() override{
+        SpeakerLayout sl = StereoSpeakerLayout();
+        scene.setSpatializer<StereoPanner>(sl);
+    }
 
     void onCreate() override {
         
@@ -171,7 +174,6 @@ struct MyApp : DistributedApp<State> {
         marketManager.populationMonitor(capitalists, workers, miners, factories.fs);
         marketManager.capitalMonitor(capitalists, workers, miners, factories.fs);
         marketManager.updatePrice(capitalists, workers, miners);
-        
         //related to market
         factories.getLaborPrice(marketManager);
         miners.calculateResourceUnitPrice(factories.fs);
@@ -348,7 +350,7 @@ struct MyApp : DistributedApp<State> {
         
             
             //glEnable(GL_POINT_SPRITE);
-            // scene.render(g);
+            //scene.render(g);
             //draw all the entities
             metropolis.draw(g);
             factories.draw(g);
@@ -361,33 +363,26 @@ struct MyApp : DistributedApp<State> {
         //     shader.end();
         // }
 
+        //
+        scene.listenerPose(nav());
+    
+
     }
     void onSound(AudioIOData& io) override {
         // scene.listenerPose(nav());
-        // scene.render(io);
-//        int numFrames = io.framesPerBuffer();
-//        for (int k = 0; k < numFrames; k++) {
-//            //capitalist sample
-//            for (int i = 0; i < capitalists.cs.size(); i++) {
-//                //io.frame(0);
-//                float f = 0;
-//                capitalists.cs[i].onProcess(io); // XXX need this nan check?
-//                // FIXME AC put back writing audio
-////                source[i]->writeSample(d);
-////                io.frame(0);
-//            }
-//            //worker sample
-//            // for (int i = 0; i < workers.workers.size(); i ++){
-//            //     float f = 0;
-//            //     f = workers.workers[i].onProcess(io);
-//            //     double d = isnan(f) ? 0.0 : (double)f;
-//            //     sourceWorker[i]->writeSample(d);
-//            //     io.frame(0);
-//            // }
-//        }
-//        io.frame(0);
         
-//        v_scene.render(io);
+        //capitalist onporcess
+           for (int i = 0; i < capitalists.cs.size(); i++) {
+               capitalists.cs[i].onProcess(io); // XXX need this nan check?
+           }
+           
+        //worker onprocess
+           for (int i = 0; i < workers.workers.size(); i ++){
+               workers.workers[i].onProcess(io); 
+           }
+
+           //scene.render(io);
+
     }
 
     void onKeyDown(const Keyboard& k) override {

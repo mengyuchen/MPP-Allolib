@@ -96,7 +96,7 @@ struct MarketManager{
         workerWealthLine = 30000;
         capitalistPovertyLine = 15000;
         capitalistWealthLine = 500000;
-
+        cout << "Market Monitor joined" << endl;
     }
     void statsInit(Capitalist_Entity& capitalists, Worker_Union& workers, Miner_Group& miners){
         numCapitalists = capitalists.cs.size();
@@ -133,6 +133,7 @@ struct MarketManager{
 
     }
     void populationMonitor(Capitalist_Entity& capitalists, Worker_Union& workers, Miner_Group& miners, vector<Factory>& factories){
+        //cout << "population on" << endl;
         liveCapitalists = 0;
         liveWorkers = 0;
         liveMiners = 0;
