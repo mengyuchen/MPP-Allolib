@@ -75,9 +75,19 @@ struct MyApp : DistributedApp<State> {
     //background noise
     Mesh geom;
 
-    void onInit() override{
+    void onInit() override {
+        for (auto &capitalist: capitalists.cs) {
+//            scene.insertFreeVoice(&capitalist);
+            scene.triggerOn(&capitalist);
+        }
+        for (auto &worker: workers.workers) {
+//            scene.insertFreeVoice(&worker);
+            scene.triggerOn(&worker);
+        }
+
         SpeakerLayout sl = StereoSpeakerLayout();
         scene.setSpatializer<StereoPanner>(sl);
+        scene.configureAudio(audioIO());
     }
 
     void onCreate() override {
@@ -371,17 +381,17 @@ struct MyApp : DistributedApp<State> {
     void onSound(AudioIOData& io) override {
         // scene.listenerPose(nav());
         
-        //capitalist onporcess
-           for (int i = 0; i < capitalists.cs.size(); i++) {
-               capitalists.cs[i].onProcess(io); // XXX need this nan check?
-           }
+//        //capitalist onporcess
+//           for (int i = 0; i < capitalists.cs.size(); i++) {
+//               capitalists.cs[i].onProcess(io); // XXX need this nan check?
+//           }
            
-        //worker onprocess
-           for (int i = 0; i < workers.workers.size(); i ++){
-               workers.workers[i].onProcess(io); 
-           }
+//        //worker onprocess
+//           for (int i = 0; i < workers.workers.size(); i ++){
+//               workers.workers[i].onProcess(io);
+//           }
 
-           //scene.render(io);
+        scene.render(io);
 
     }
 
