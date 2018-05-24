@@ -22,6 +22,7 @@
 using namespace al;
 using namespace std;
 
+
 // SampleLooper from Karl
 //
 typedef gam::SamplePlayer<float, gam::ipl::Cubic, gam::tap::Wrap>
@@ -219,7 +220,7 @@ struct Capitalist : Agent{
             //biquad
             // bq.type(gam::BAND_PASS);
             // bq.freq(500 + cutoff * 0.08);
-            float sample = s * 0.7 + sineClick * 0.3;
+            float sample = s * 0.7 + sineClick * 0.2;
 
             io.out(0) = isnan(sample) ? 0.0 : (double)sample;
 //            return sample;
@@ -437,7 +438,56 @@ struct Miner : Agent {
     bool exchanging;
     Mesh resource;
 
+    //sin A
+    gam::Osc<> sin;
+    gam::Env<3> sinADR;
+    gam::Accum<> sinTmr;
+    float sinDur = 8.0f;
+    float baseFreq = 220.0f;
+    float periods[4] = {sinDur * 0.5f, sinDur * 0.75f, sinDur, sinDur * 1.25f};
+    float freqs[4] = {baseFreq * 2, baseFreq * 4, baseFreq *3, baseFreq *5};
+    int index = 0;
+
+    //bigger control
+    gam::Accum<> sinTmr2;
+    float shiftFreq;
+    float finalFreq;
+    float flucFreq;
+    float oldFreq;
+    float targetFreq;
+
     Miner(){
+        //set up instrument
+        gam::ArrayPow2<float> tbSaw(2048);
+        gam::addSinesPow<1>(tbSaw, 9,1);
+
+        gam::ArrayPow2<float> tbSin(2048);
+        gam::addSine(tbSin);
+
+        gam::ArrayPow2<float> tbOcean(2048);
+        {    float A[] = {1, 0.4, 0.65, 0.3, 0.18, 0.08};
+        float C[] = {1,4,7,11,15,18};
+        gam::addSines(tbOcean, A,C,6);
+        }
+
+        //sin A
+        sin.freq(30);
+        sin.source(tbOcean);
+        //sinDur = 4.0;
+        
+        sinADR.levels(0,0.2,0.2,0);
+        sinADR.lengths(sinDur/4,sinDur/2,sinDur/2);
+        sinADR.curve(-4);
+        sinTmr.period(sinDur * 4);
+        //sinA baseFreqs
+        shiftFreq = baseFreq * 0.5;
+        finalFreq = baseFreq * 2 + shiftFreq;
+        flucFreq = baseFreq / 5.0f;
+        targetFreq = baseFreq;
+        //bigger
+        sinTmr2.period(sinDur * 8);
+
+        //behavioral params start here
         maxAcceleration = 1;
         mass = 1.0;
         maxspeed = 0.5;
@@ -509,6 +559,50 @@ struct Miner : Agent {
         resource.generateNormals();
         body.decompress();
         body.generateNormals();
+    }
+
+    virtual void onProcess(AudioIOData& io) override {
+        while (io()){
+            
+            //finalFreq = (1 - sinTmr.phase()) * oldFreq + sinTmr.phase() * targetFreq;
+            
+            if (sinTmr()){
+                sinADR.reset();
+                
+                //sinADR.levels(0,0.2,0.2,0);
+                sinADR.lengths(sinDur/4,sinDur/2,sinDur/4);
+                //sinADR.curve(-4);
+                flucFreq = floor(al::rnd::uniform(5, 75));
+                finalFreq = freqs[index] + shiftFreq + flucFreq;
+                sin.freq(finalFreq);
+                sinTmr.period(periods[rnd::uniform(0,4)]);
+                index ++;
+                if (index == 4){
+                    index = 0;
+                }
+                
+                //targetFreq = freqs[index] + shiftFreq + flucFreq;
+                //oldFreq = finalFreq;
+            }
+
+            if (sinTmr2()){
+                shiftFreq += baseFreq;
+                if (shiftFreq > baseFreq * 5) {
+                    shiftFreq = baseFreq * 0.5;
+                }
+                // sinDur = sinDur * 0.8;
+                // sinTmr.period(sinDur);
+                // if (sinDur < 1.0){
+                //     sinDur = 6.0;
+                // }
+            }
+
+            float s = sin() * sinADR() * 0.3;
+
+            io.out(0) = isnan(s) ? 0.0 : (double)s;
+
+
+        }
     }
 
     void run(vector<Natural_Resource_Point>& nrps, vector<Miner>& others, vector<Capitalist>& capitalists){
@@ -843,32 +937,22 @@ struct Worker : Agent {
     float neighborNum;
     float noiseLevel;
 
-    // SoundSource *soundSource;
-    // using Agent::pose();
-    // float oscPhase = 0;
-    // float oscEnv = 1;
-    // float rate;
-    // double audioTimer;
-    // gam::SamplePlayer<float, gam::ipl::Linear, gam::phsInc::Loop> player;
-    // gam::OnePole<> smoothRate;
-    // DynamicSamplePlayer v_player;
+    //sin A
+    gam::Osc<> sin;
+    gam::Env<3> sinADR;
+    gam::Accum<> sinTmr;
+    float sinDur;
+    float baseFreq = 20.0f;
+    float freqs[4] = {baseFreq * 2, baseFreq * 4, baseFreq *3, baseFreq *5};
+    int index = 0;
 
-    //gamma effects
-    //gam::LFO<> osc;
-
-    gam::Sine<> src;
-    gam::AD<> env;
-    gam::LFO<> mod;
-	// gam::CSine<> shifter;
-    // gam::LFO<> shiftMod;
-    // gam::Biquad<> bq;
-    // gam::OnePole<> onePole;
-    gam::NoisePink<> pink;
-    gam::Accum<> tmr;
-    float sample;
-    // gam::Delay<float, gam::ipl::Trunc> delay;
-    // gam::SineD<> sine;
-    Vibrato vibrato;
+    //bigger control
+    gam::Accum<> sinTmr2;
+    float shiftFreq;
+    float finalFreq;
+    float flucFreq;
+    float oldFreq;
+    float targetFreq;
 
     Worker(){
         maxAcceleration = 1;
@@ -924,48 +1008,36 @@ struct Worker : Agent {
         body.decompress();
         body.generateNormals();
 
-        //audio basic
-        // soundSource = new SoundSource;
-        // soundSource->farClip(3);
-        // //soundSource->farBias(0);
-        // soundSource->useAttenuation(true);
-        // soundSource->attenuation(3);
-        // // SearchPaths searchPaths;
-        // // searchPaths.addSearchPath("..");
-        // // string filePath = searchPaths.find("socialismgood.wav").filepath();
-        // // player.load(filePath.c_str());
-        // // v_player.load(filePath.c_str());
-        // // audioTimer = 0;
+
+        //set up instrument
+        gam::ArrayPow2<float> tbSaw(2048);
+        gam::addSinesPow<1>(tbSaw, 9,1);
+
+        gam::ArrayPow2<float> tbOcean(2048);
+        {    float A[] = {1, 0.4, 0.65, 0.3, 0.18, 0.08};
+        float C[] = {1,4,7,11,15,18};
+        gam::addSines(tbOcean, A,C,6);
+        }
+
+        //sin A
+        sin.freq(30);
+        sin.source(tbOcean);
+        //sinDur = 4.0;
+        sinDur = rnd::uniform(2.0, 4.0);
+        sinADR.levels(0,0.2,0.2,0);
+        sinADR.lengths(0.5,3,0.5);
+        sinADR.curve(-4);
+        sinTmr.period(sinDur);
+        //sinA baseFreqs
+        shiftFreq = baseFreq * 0.5;
+        finalFreq = baseFreq * 2 + shiftFreq;
+        flucFreq = baseFreq / 5.0f;
+        targetFreq = baseFreq;
+        //bigger
+        sinTmr2.period(sinDur * 4);
         
 
-        // //effects
-        // //oscillator
-        //sine.freq(440);
-
-        // //for sample
-        // // smoothRate.freq(3.14159);
-        // // smoothRate = 0.07;
-
-        // //for hilbert
-		// shiftMod.period(16);
-        // shifter.freq(200);
-
-        //noted pink noise
-        // mod.period(120);
-        // mod.phase(0.5);
-        tmr.period(4.5);
-        env.attack(0.01).decay(0.24);
-        noiseLevel = 0.0;
-		
-        // //biquad
-        // bq.res(4);
-        // bq.level(2);
-
-        // //delay
-        // tmr.period(5);
-        // tmr.phaseMax();
-        // delay.maxDelay(0.4);
-        // delay.delay(0.2);
+        
     }
     void noiseLevelUpdate(){
         noiseLevel = MapValue(neighborNum, 0, 100, 0.01, 0.4);
@@ -973,62 +1045,42 @@ struct Worker : Agent {
 
     virtual void onProcess(AudioIOData& io) override {
         while (io()){
-            // //player.rate(smoothRate());
-            // if (tmr()){
-            //     sine.set(gam::rnd::uni(10,1)*50, 0.2, gam::rnd::lin(2., 0.1));
-            // }
-            // float source = sine();
-
-            // //experimental area
             
-            // //hilbert transformation
-            // gam::Complex<float> c = hil(source);
-            // shifter.freq(shiftMod.hann()*200);
-		    // c *= shifter();
-            // float sr = c.r;
-            // float si = c.i;
+            finalFreq = (1 - sinTmr.phase()) * oldFreq + sinTmr.phase() * targetFreq;
+            sin.freq(finalFreq);
+            if (sinTmr()){
+                sinADR.reset();
+                
+                //sinADR.levels(0,0.2,0.2,0);
+                sinADR.lengths(sinDur/4,sinDur/2,sinDur/4);
+                //sinADR.curve(-4);
+                flucFreq = floor(al::rnd::uniform(5, 75));
+                
+                index ++;
+                if (index == 4){
+                    index = 0;
+                }
+                targetFreq = freqs[index] + shiftFreq + flucFreq;
+                oldFreq = finalFreq;
+            }
 
-            // //one pole
-            // float cutoff = gam::scl::pow3(mod.triU()) * 2000;
-            // onePole.freq(1000 + cutoff * 0.2);
-            // //float s = onePole(sr) * 0.3 + onePole(si) * 0.3;
-            // if (tmr()){
-            //     // float frq = pink() * 24;
-            //     // frq = gam::scl::ratioET(gam::scl::nearest(frq, "2212221")) * gam::scl::freq("c4");
-            //     float frq = rnd::uniformS() * 880 + 30;
-            //     src.freq(frq);
-            //     env.reset();
-            
-            // }
+            if (sinTmr2()){
+                shiftFreq += baseFreq;
+                if (shiftFreq > baseFreq * 5) {
+                    shiftFreq = baseFreq * 0.5;
+                }
+                // sinDur = sinDur * 0.8;
+                // sinTmr.period(sinDur);
+                // if (sinDur < 1.0){
+                //     sinDur = 6.0;
+                // }
+            }
 
-            //float s = src() * env() * 0.05 + 
-            //float s = src() * env() * 0.1 * noiseLevel;
-            float s = pink() * 0.1 * noiseLevel;
+            float s = sin() * sinADR() * 0.2;
 
-            //s = vibrato(s);
-            sample = s;
-//            return sample;
-            // s = vibrato(s);
+            io.out(0) = isnan(s) ? 0.0 : (double)s;
 
-            // //biquad
-            // bq.type(gam::BAND_PASS);
-            // bq.freq(500 + cutoff * 0.08);
-            // float sample = bq(s);
 
-            // //delay
-            // // if (tmr()) {
-            // //     sample = bq(s);
-            // // }
-            // // sample += delay(sample + delay()*0.2);
-            // //sample += delay(sample) + delay.read(0.15) + delay.read(0.39);
-            
-            // //write sample
-            // //soundSource->writeSample(sample);
-            // //soundSource->writeSample(source * 0.01); 
-
-            // //for bypass only
-            // io.out(0) += source;
-            // io.out(1) += source;
         }
     }
     void run(vector<Factory>& fs, vector<Worker>& others, vector<Capitalist>& capitalist){

@@ -84,6 +84,10 @@ struct MyApp : DistributedApp<State> {
 //            scene.insertFreeVoice(&worker);
             scene.triggerOn(&worker);
         }
+        for (auto &miner: miners.ms) {
+//            scene.insertFreeVoice(&worker);
+            scene.triggerOn(&miner);
+        }
 
         SpeakerLayout sl = StereoSpeakerLayout();
         scene.setSpatializer<StereoPanner>(sl);
@@ -375,7 +379,7 @@ struct MyApp : DistributedApp<State> {
 
         //
         scene.listenerPose(nav());
-    
+        //scene.render(g);
 
     }
     void onSound(AudioIOData& io) override {
