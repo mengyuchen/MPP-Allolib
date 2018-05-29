@@ -302,6 +302,7 @@ struct MyApp : DistributedApp<State> {
 
     // set up window size to match two projectors on one machine
     if (role() == ROLE_RENDERER) {
+        cout << "this is renderer" << endl;
         if (sphere::is_renderer()) {
             int width, height;
             sphere::get_fullscreen_dimension(&width, &height);
@@ -315,6 +316,7 @@ struct MyApp : DistributedApp<State> {
             }
         }
         else { // Not in sphere
+            cout << "  but not sphere machin" << endl;
             dimensions(50, 50, 640, 480);
         }
         
