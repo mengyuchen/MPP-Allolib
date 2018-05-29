@@ -538,18 +538,18 @@ struct MyApp : DistributedApp<State> {
 
   void draw_omni_scene(Graphics& g)
   {
-    if (renderModeSwitch == 3) {
+    if (state().renderModeSwitch == 3) {
       g.clear(1, 0.85, 0.4);
       g.depthTesting(true);
       g.blending(false);
     }
-    else if (renderModeSwitch == 2) {
+    else if (state().renderModeSwitch == 2) {
       g.clear(0.31, 0, 0.27);
       g.depthTesting(false);
       g.blending(true);
       g.blendModeAdd();
     }
-    else if (renderModeSwitch == 1) {
+    else if (state().renderModeSwitch == 1) {
       g.clear(1, 1, 1);
       g.depthTesting(false);
       g.blending(true);
