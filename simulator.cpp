@@ -336,10 +336,10 @@ struct MyApp : DistributedApp<State> {
 //            scene.insertFreeVoice(&worker);
             scene.triggerOn(&miner);
         }
-        scene.distanceAttenuation().farClip(15);
-        scene.distanceAttenuation().nearClip(0.1);
-        scene.distanceAttenuation().law(ATTEN_LINEAR);
-        scene.distanceAttenuation().attenuation(15);
+        scene.distanceAttenuation().farClip(6);
+        scene.distanceAttenuation().nearClip(0.01);
+        // scene.distanceAttenuation().law(ATTEN_INVERSE_SQUARE);
+        // scene.distanceAttenuation().attenuation(1);
 
         SpeakerLayout sl = StereoSpeakerLayout();
         scene.setSpatializer<StereoPanner>(sl);

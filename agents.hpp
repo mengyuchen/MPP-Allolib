@@ -90,17 +90,37 @@ struct Capitalist : Agent{
     //gamma effects
     //gam::LFO<> osc;
     gam::SineD<> sine;
-	gam::LFO<> shiftMod;
-    gam::LFO<> mod;
-	gam::Hilbert<> hil;
-	gam::CSine<> shifter;
-    // gam::Biquad<> bq;
-    gam::OnePole<> onePole;
-    gam::Accum<> tmr;
-    gam::NoisePink<> s_noise;
-    gam::Delay<float, gam::ipl::Trunc> delay;
-    Vibrato vibrato;
-    float baseFreq;
+	// gam::LFO<> shiftMod;
+    // gam::LFO<> mod;
+	// gam::Hilbert<> hil;
+	// gam::CSine<> shifter;
+    // // gam::Biquad<> bq;
+    // gam::OnePole<> onePole;
+    // gam::Accum<> tmr;
+    // gam::NoisePink<> s_noise;
+    // gam::Delay<float, gam::ipl::Trunc> delay;
+    // Vibrato vibrato;
+    // float baseFreq;
+
+    gam::Osc<> sin;
+        gam::Env<3> sinADR;
+        gam::Accum<> sinTmr;
+        float sinDur = 0.6f;
+        float baseFreq = 180.0f;
+        float periods[8] = {0.5,2,0.25,1.5,1.0, 4.0, 8.0, 3.0};
+        float freqs[4] = {baseFreq * 1.6f, baseFreq * 2.4f, baseFreq *1.8f, baseFreq*1.2f};
+        int index = 0;
+        int tmrIndex = 0;
+
+        //bigger control
+        gam::Accum<> sinTmr2;
+        gam::Env<3> ampEnv;
+        gam::Accum<> ampTmr;
+        float shiftFreq;
+        float finalFreq;
+        float flucFreq;
+        float oldFreq;
+        float targetFreq;    
 
 
     Capitalist(){
@@ -147,47 +167,78 @@ struct Capitalist : Agent{
         body.decompress();
         body.generateNormals();
 
-        //audio basic
-        // soundSource = new SoundSource;
-        // soundSource->farClip(25);
-        // // soundSource->farBias(0);
-        // soundSource->useAttenuation(true);
-        // soundSource->attenuation(25);
-        // SearchPaths searchPaths;
-        // searchPaths.addSearchPath("..");
-        // string filePath = searchPaths.find("socialismgood.wav").filepath();
-        // player.load(filePath.c_str());
-        //v_player.load(filePath.c_str());
-        //audioTimer = 0;
-        
-
         //effects
         //sine
         baseFreq = rnd::uniform(110, 880);
-        sine.freq(baseFreq);
+        sine.freq(20);
         
-        //for sample
-        //smoothRate.freq(3.14159);
-        //smoothRate = -2.5;
-        //smoothRate = 0.07;
+        // //for sample
+        // //smoothRate.freq(3.14159);
+        // //smoothRate = -2.5;
+        // //smoothRate = 0.07;
 
-        //for hilbert
-		shiftMod.period(16);
-        shifter.freq(baseFreq / 4);
+        // //for hilbert
+		// shiftMod.period(16);
+        // shifter.freq(baseFreq / 4);
 
-        //for one pole
-        mod.period(120);
-        mod.phase(0.5);
+        // //for one pole
+        // mod.period(120);
+        // mod.phase(0.5);
 		
-        //biquad
-        // bq.res(4);
-        // bq.level(2);
+        // //biquad
+        // // bq.res(4);
+        // // bq.level(2);
 
-        //delay
-        tmr.period(0.75);
-        tmr.phaseMax();
-        // delay.maxDelay(0.4);
-        // delay.delay(0.2);
+        // //delay
+        // tmr.period();
+        // tmr.phaseMax();
+        // // delay.maxDelay(0.4);
+        // // delay.delay(0.2);
+
+       
+
+         //set up instrument
+        // gam::ArrayPow2<float> tbSaw(2048);
+        // gam::addSinesPow<1>(tbSaw, 9,1);
+
+        gam::ArrayPow2<float> tbSin(2048);
+        gam::addSine(tbSin);
+
+        // gam::ArrayPow2<float> tbSqr(2048);
+        // gam::addSinesPow<1>(tbSqr, 9,2);
+
+        // gam::ArrayPow2<float> tbOcean(2048);
+        // {    float A[] = {1, 0.4, 0.65, 0.3, 0.18, 0.08};
+        // float C[] = {1,4,7,11,15,18};
+        // gam::addSines(tbOcean, A,C,6);
+        // }
+        gam::ArrayPow2<float> tb__2(2048);
+        {    float A[] = {0.5,0.8,0.7,1,0.3,0.4,0.2,0.12}; // harmonic amplitudes of series
+        float C[] = {3,4,7,8,11,12,15,16}; //cycles harmonic numbers of series
+        gam::addSines(tb__2, A,C,8); //8 is number of harmonics, same with array size above
+        }
+
+        //sin A
+        sin.freq(20);
+        sin.source(tb__2);
+        //sinDur = 4.0;
+        
+        sinADR.levels(0,0.2,0.2,0);
+        sinADR.lengths(sinDur/4,sinDur/2,sinDur/2);
+        sinADR.curve(-4);
+        sinTmr.period(sinDur * 4);
+        //sinA baseFreqs
+        shiftFreq = baseFreq * 0.5;
+        finalFreq = baseFreq * 2 + shiftFreq;
+        flucFreq = baseFreq / 5.0f;
+        targetFreq = baseFreq;
+        //bigger
+        sinTmr2.period(sinDur * 8);
+        //amp env
+        
+        ampEnv.levels(0,0.2,0.2,0);
+        ampEnv.lengths(12, 30, 18);
+        ampTmr.period(sinDur * 16);
 
     }
     virtual ~Capitalist(){
@@ -196,36 +247,79 @@ struct Capitalist : Agent{
     virtual void onProcess(AudioIOData& io) override{
         while (io()){
             //player.rate(smoothRate());
-            if (tmr()){
-                //source = player();
-                sine.set(gam::rnd::uni(10,1)*50, 0.2, gam::rnd::lin(2., 0.1));
-            }
-            float source = sine();
-            float sineClick = sine();
-            //experimental area
+            // if (tmr()){
+            //     //source = player();
+            //    sine.set(gam::rnd::uni(10,1)*50, 0.2, gam::rnd::lin(2., 0.1)); 
+            // }
+            // float source = sine();
+            // float sineClick = sine();
+            // //experimental area
             
-            //hilbert transformation
-            gam::Complex<float> c = hil(source);
-            shifter.freq(shiftMod.hann()*200);
-		    c *= shifter();
-            float sr = c.r;
-            float si = c.i;
+            // //hilbert transformation
+            // gam::Complex<float> c = hil(source);
+            // shifter.freq(shiftMod.hann()*200);
+		    // c *= shifter();
+            // float sr = c.r;
+            // float si = c.i;
 
-            //one pole
-            float cutoff = gam::scl::pow3(mod.triU()) * 2000;
-            onePole.freq(1000 + cutoff * 0.2);
-            //float s = onePole(sr) * 0.3 + onePole(si) * 0.3;
+            // //one pole
+            // float cutoff = gam::scl::pow3(mod.triU()) * 2000;
+            // onePole.freq(1000 + cutoff * 0.2);
+            // //float s = onePole(sr) * 0.3 + onePole(si) * 0.3;
             
-            //float s = onePole(sr + si) * 0.2 + s_noise() * gam::scl::pow3(mod.triU()) * 0.06;
-            float s = onePole(sr + si) * 0.2;
-            s = vibrato(s);
+            // //float s = onePole(sr + si) * 0.2 + s_noise() * gam::scl::pow3(mod.triU()) * 0.06;
+            // float s = onePole(sr + si) * 0.2;
+            // s = vibrato(s);
 
             //biquad
             // bq.type(gam::BAND_PASS);
             // bq.freq(500 + cutoff * 0.08);
-            float sample = s * 0.7 + sineClick * 0.3;
+            // float sample = s * 0.7 + sineClick * 0.3;
 
-            io.out(0) = isnan(sample) ? 0.0 : (double)sample;
+            if (sinTmr()){
+                    sinADR.reset();
+                    tmrIndex = rnd::uniform(8,0);
+                    //cout << tmrIndex << endl;
+                    //sinADR.levels(0,0.2,0.2,0);
+                    sinADR.lengths(sinDur/8 * periods[tmrIndex],sinDur/4* periods[tmrIndex],sinDur/8* periods[tmrIndex]);
+                    //sinADR.curve(-4);
+                    flucFreq = floor(al::rnd::uniform(5, 75));
+                    finalFreq = freqs[index] + shiftFreq + flucFreq;
+                    sin.freq(finalFreq);
+                    sinTmr.period(periods[rnd::uniform(8,0)]);
+                    index ++;
+                    if (index == 4){
+                        index = 0;
+                    }
+                    //sineD
+                    sine.set(gam::rnd::uni(10,1)*50, 0.2, gam::rnd::lin(2., 0.1));
+                    //targetFreq = freqs[index] + shiftFreq + flucFreq;
+                    //oldFreq = finalFreq;
+                }
+
+                if (sinTmr2()){
+                    //sinTmr.period(sinDur / 2);
+                    shiftFreq += baseFreq;
+                    if (shiftFreq > baseFreq * 3) {
+                        shiftFreq = baseFreq * 0.5;
+                    }
+                    
+                    // sinDur = sinDur * 0.8;
+                    // sinTmr.period(sinDur);
+                    // if (sinDur < 1.0){
+                    //     sinDur = 6.0;
+                    // }
+                }
+                if (ampTmr()){
+                    ampEnv.reset();
+                    ampEnv.lengths(12, 30, 18);
+                }
+
+                float s = sine() * sinADR() * 0.2 + sin() * sinADR() * 0.2;//* ampEnv()
+
+                io.out(0) = isnan(s) ? 0.0 : (double)s;
+
+            // io.out(0) = isnan(sample) ? 0.0 : (double)sample;
 //            return sample;
             //delay
             // if (tmr()) {
@@ -445,11 +539,12 @@ struct Miner : Agent {
     gam::Osc<> sin;
     gam::Env<3> sinADR;
     gam::Accum<> sinTmr;
-    float sinDur = 0.6f;
+    float sinDur = 0.3f;
     float baseFreq = 180.0f;
-    float periods[4] = {sinDur * 2.0f, sinDur * 2.0f, sinDur * 1.5f, sinDur * 1.8f};
+    float periods[8] = {0.5,2,0.25,1.5,1.0, 2.5, 3.0, 4.0};
     float freqs[4] = {baseFreq * 1.6f, baseFreq * 2.4f, baseFreq *1.8f, baseFreq*1.2f};
     int index = 0;
+    int tmrIndex = 0;
 
     //bigger control
     gam::Accum<> sinTmr2;
@@ -589,14 +684,15 @@ struct Miner : Agent {
             if (!fullpack){    
                 if (sinTmr()){
                     sinADR.reset();
-                    
+                    tmrIndex = rnd::uniform(8,0);
+                    //cout << tmrIndex << endl;
                     //sinADR.levels(0,0.2,0.2,0);
-                    sinADR.lengths(sinDur/8,sinDur/4,sinDur/8);
+                    sinADR.lengths(sinDur/8 * periods[tmrIndex],sinDur/4* periods[tmrIndex],sinDur/8* periods[tmrIndex]);
                     //sinADR.curve(-4);
                     flucFreq = floor(al::rnd::uniform(5, 75));
                     finalFreq = freqs[index] + shiftFreq + flucFreq;
                     sin.freq(finalFreq);
-                    sinTmr.period(periods[rnd::uniform(0,4)]);
+                    sinTmr.period(periods[rnd::uniform(8,0)]);
                     index ++;
                     if (index == 4){
                         index = 0;
@@ -607,7 +703,7 @@ struct Miner : Agent {
                 }
 
                 if (sinTmr2()){
-                    sinTmr.period(sinDur / 2);
+                    //sinTmr.period(sinDur / 2);
                     shiftFreq += baseFreq;
                     if (shiftFreq > baseFreq * 3) {
                         shiftFreq = baseFreq * 0.5;
@@ -1010,8 +1106,10 @@ struct Worker : Agent {
     gam::Env<3> sinADR;
     gam::Accum<> sinTmr;
     float sinDur;
-    float baseFreq = 110.0f;
+    float baseFreq = 50.0f;
     float freqs[4] = {baseFreq * 2, baseFreq * 4, baseFreq *3, baseFreq *2.5f};
+    float periods[8] = {0.5,2,0.25,1.5,1.0, 4.0, 6.0, 0.75};
+    int tmrIndex = 0;
     int index = 0;
 
     //bigger control
@@ -1095,9 +1193,9 @@ struct Worker : Agent {
 
         //sin A
         sin.freq(30);
-        sin.source(tbSaw);
+        sin.source(tb__3);
         //sinDur = 4.0;
-        sinDur = 6.0f;
+        sinDur = 0.2f;
         sinADR.levels(0,0.2,0.2,0);
         sinADR.lengths(sinDur/4, sinDur/2,sinDur/4);
         sinADR.curve(-4);
@@ -1121,15 +1219,16 @@ struct Worker : Agent {
         while (io()){
             
             if (jobHunting){
-                finalFreq = (1 - sinTmr.phase()) * oldFreq + sinTmr.phase() * targetFreq;
-                sin.freq(finalFreq);
+                //finalFreq = (1 - sinTmr.phase()) * oldFreq + sinTmr.phase() * targetFreq;
+                //sin.freq(finalFreq);
                 if (sinTmr()){
                     sinADR.reset();
                     
                     //sinADR.levels(0,0.2,0.2,0);
-                    sinADR.lengths(sinDur/4,sinDur/2,sinDur/4);
+                    tmrIndex = rnd::uniform(8,0);
+                    sinADR.lengths(sinDur * periods[tmrIndex] /4 ,sinDur * periods[tmrIndex] /2,sinDur  * periods[tmrIndex] /4);
                     //sinADR.curve(-4);
-                    flucFreq = floor(al::rnd::uniform(5, 75));
+                    flucFreq = floor(al::rnd::uniform(75, 10));
                     
                     index ++;
                     if (index == 4){
@@ -1137,11 +1236,14 @@ struct Worker : Agent {
                     }
                     targetFreq = freqs[index] + shiftFreq + flucFreq;
                     oldFreq = finalFreq;
+                    sin.freq(targetFreq);
+                    
+                    sinTmr.period(periods[rnd::uniform(8,0)]);
                 }
 
                 if (sinTmr2()){
                     shiftFreq += baseFreq;
-                    if (shiftFreq > baseFreq * 3) {
+                    if (shiftFreq > baseFreq * 4) {
                         shiftFreq = baseFreq * 0.5;
                     }
                     // sinDur = sinDur * 0.8;
@@ -1151,7 +1253,7 @@ struct Worker : Agent {
                     // }
                 }
 
-                float s = sin() * sinADR() * 0.3;
+                float s = sin() * sinADR() * 0.2;
                 io.out(0) = isnan(s) ? 0.0 : (double)s;
             } else {
                 //finalFreq = (1 - sinTmr.phase()) * oldFreq + sinTmr.phase() * targetFreq;
@@ -1160,9 +1262,10 @@ struct Worker : Agent {
                     sinADR.reset();
                     
                     //sinADR.levels(0,0.2,0.2,0);
-                    sinADR.lengths(sinDur * 2,sinDur * 6,sinDur * 4);
+                     sinADR.lengths(sinDur * periods[tmrIndex] ,sinDur * periods[tmrIndex],sinDur  * periods[tmrIndex]);
+                    //sinADR.lengths(sinDur,sinDur,sinDur);
                     //sinADR.curve(-4);
-                    flucFreq = floor(al::rnd::uniform(5, 75));
+                    flucFreq = floor(al::rnd::uniform(75, 10));
                     
                     index ++;
                     if (index == 4){
@@ -1176,7 +1279,7 @@ struct Worker : Agent {
                 if (sinTmr2()){
                     sinTmr.period(sinDur * 12);
                     shiftFreq += baseFreq;
-                    if (shiftFreq > baseFreq * 3) {
+                    if (shiftFreq > baseFreq * 4) {
                         shiftFreq = baseFreq * 0.5;
                     }
                     // sinDur = sinDur * 0.8;
@@ -1185,7 +1288,7 @@ struct Worker : Agent {
                     //     sinDur = 6.0;
                     // }
                 }
-                float s = sin() * sinADR() * 0.3;
+                float s = sin() * sinADR() * 0.2;
                 io.out(0) = isnan(s) ? 0.0 : (double)s;
             }
             
