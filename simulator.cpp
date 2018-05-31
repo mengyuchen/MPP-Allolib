@@ -66,7 +66,7 @@ struct RendererThings {
 
   float phase;
 
-  int renderModeSwitch = 1;
+  int renderModeSwitch = 2;
 
   void init(const State &state) {
     // shader
@@ -282,7 +282,7 @@ struct MyApp : DistributedApp<State> {
   //    cuttlebone::Maker<State> maker;
 
   // renderMode
-  int renderModeSwitch = 1;
+  int renderModeSwitch = 2;
   float colorR = 1;
   float colorG = 0.85;
   float colorB = 0.4;
@@ -540,6 +540,7 @@ struct MyApp : DistributedApp<State> {
       simulator_system_update(dt);
       simulator_state_update();
       
+      //timed camera Movement and rendermode switch
         if (FPS().sec() > 0 && FPS().sec() < 30){
             //nav().pos().lerp(Vec3f(0,0,0), FPS().sec() / 30.0f * dt);
             nav().pos() = Vec3f(0,0,80) * (1 - FPS().sec() / 30.0f) +  Vec3f(0,0,0) * FPS().sec() / 30.0f;
@@ -557,7 +558,7 @@ struct MyApp : DistributedApp<State> {
         } else if (FPS().sec() >= 90 && FPS().sec() < 105){
             nav().pos() =  NaturalResourcePts.nrps[0].position * (1 - (FPS().sec() - 90) / 15.0f) + metropolis.mbs[0].position * (FPS().sec() - 90) / 15.0f;
         } else if (FPS().sec() >= 105 && FPS().sec() < 110){
-
+            renderModeSwitch = 3;
         } else if (FPS().sec() >= 110 && FPS().sec() < 140){
             if (miners.ms[minerIndex].bankrupted() == false){
                 
@@ -595,6 +596,7 @@ struct MyApp : DistributedApp<State> {
             nav().pos() = capitalists.cs[capitalistIndex].pose().pos() + Vec3f(0, 0, -4);
             //nav().pos().lerp(capitalists.cs[capitalistIndex].pose().pos(), (FPS().sec() - 110)) / 15;
         } else if (FPS().sec() >= 200 && FPS().sec() < 215){
+            renderModeSwitch = 1;
             nav().pos().lerp(Vec3f(0,0,40), (FPS().sec() - 200) / 15.0f);
         } else if (FPS().sec() >= 215 && FPS().sec() < 240){
             nav().pos() =  Vec3f(0,0,40) * (1 - (FPS().sec() - 215) / 25.0f) + Vec3f(24,12,8) * (FPS().sec() - 215) / 25.0f;
