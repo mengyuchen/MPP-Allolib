@@ -300,6 +300,7 @@ struct MyApp : DistributedApp<State> {
 
   void onInit() override {
 
+    std::cout << "I am " << roleName() <<std::endl;
     // set up window size to match two projectors on one machine
     if (role() == ROLE_RENDERER) {
         cout << "this is renderer" << endl;
@@ -353,9 +354,14 @@ struct MyApp : DistributedApp<State> {
     // update some variables for omni drawing and load warp-blend data
     running_in_sphere_renderer = sphere::is_renderer();
     window_is_stereo_buffered = Window::displayMode() & Window::STEREO_BUF;
+
+    std::cout << "In sphere: " << running_in_sphere_renderer;
+    std::cout << " stereo buffered:" << window_is_stereo_buffered << std::endl;
     if (role() == DistributedApp::ROLE_RENDERER) {
       load_perprojection_configuration();
       cursorHide(true);
+    } else {
+
     }
 
     // common for both sim and ren
@@ -729,7 +735,11 @@ int main() {
   //   does DistributedApp handle 'not opening audio io if it is renderer'
   app.initAudio(SAMPLE_RATE, BLOCK_SIZE, 2, 0);
   gam::Sync::master().spu(app.audioIO().fps());
-  app.displayMode(Window::DEFAULT_BUF | Window::STEREO_BUF);
+  if (app.role() == DistributedApp<State>::ROLE_RENDERER) {
+    app.displayMode(Window::DEFAULT_BUF | Window::STEREO_BUF);
+  } else {
+    app.displayMode(Window::DEFAULT_BUF);
+  }
   app.start();
 }
 
