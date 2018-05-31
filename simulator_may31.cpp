@@ -1,4 +1,4 @@
-﻿#include "al/core/app/al_DistributedApp.hpp"
+#include "al/core/app/al_DistributedApp.hpp"
 #include "al/core/math/al_Vec.hpp"
 #include "agent_managers.hpp"
 #include "al/core/math/al_Quat.hpp"
@@ -9,8 +9,7 @@
 //#include "al/util/al_AlloSphereAudioSpatializer.hpp"
 #include "al/core/sound/al_AudioScene.hpp"
 #include "al/core/sound/al_StereoPanner.hpp"
-//#include "al/core/sound/al_Vbap.hpp"
-#include "al/core/sound/al_Lbap.hpp"
+#include "al/core/sound/al_Vbap.hpp"
 #include "al/util/al_AlloSphereSpeakerLayout.hpp"
 //#include "al/util/al_Simulator.hpp"
 //#include "alloGLV/al_ControlGLV.hpp"
@@ -346,9 +345,11 @@ struct MyApp : DistributedApp<State> {
         // scene.distanceAttenuation().law(ATTEN_INVERSE_SQUARE);
         // scene.distanceAttenuation().attenuation(1);
 
-      SpeakerLayout sl = AlloSphereSpeakerLayout();
-      scene.setSpatializer<Lbap>(sl);
-        scene.prepare(audioIO());
+        // SpeakerLayout sl = StereoSpeakerLayout();
+        // scene.setSpatializer<StereoPanner>(sl);
+        SpeakerLayout sl = AlloSphereSpeakerLayout();
+        scene.setSpatializer<Vbap>(sl);
+        scene.configureAudio(audioIO());
 
     }
   }
