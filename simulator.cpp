@@ -345,8 +345,8 @@ struct MyApp : DistributedApp<State> {
         // scene.distanceAttenuation().law(ATTEN_INVERSE_SQUARE);
         // scene.distanceAttenuation().attenuation(1);
 
-        SpeakerLayout sl = StereoSpeakerLayout();
-        scene.setSpatializer<StereoPanner>(sl);
+      SpeakerLayout sl = AlloSphereSpeakerLayout();
+      scene.setSpatializer<Vbap>(sl);
         scene.configureAudio(audioIO());
 
     }
