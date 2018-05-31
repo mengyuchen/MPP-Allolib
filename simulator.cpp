@@ -9,7 +9,8 @@
 //#include "al/util/al_AlloSphereAudioSpatializer.hpp"
 #include "al/core/sound/al_AudioScene.hpp"
 #include "al/core/sound/al_StereoPanner.hpp"
-//#include "al/core/sound/al_Vbap.hpp"
+#include "al/core/sound/al_Vbap.hpp"
+#include "al/core/sound/al_Ambisonics.hpp"
 #include "al/core/sound/al_Lbap.hpp"
 #include "al/util/al_AlloSphereSpeakerLayout.hpp"
 //#include "al/util/al_Simulator.hpp"
@@ -342,14 +343,17 @@ struct MyApp : DistributedApp<State> {
 //            scene.insertFreeVoice(&worker);
             scene.triggerOn(&miner);
         }
-        scene.distanceAttenuation().farClip(6);
+        scene.distanceAttenuation().farClip(80);
         scene.distanceAttenuation().nearClip(0.01);
         // scene.distanceAttenuation().law(ATTEN_INVERSE_SQUARE);
         // scene.distanceAttenuation().attenuation(1);
 
       SpeakerLayout sl = AlloSphereSpeakerLayout();
-      scene.setSpatializer<Lbap>(sl);
+      auto spatializer = scene.setSpatializer<Lbap>(sl);
+      
         scene.prepare(audioIO());
+        audioIO().print();
+        scene.print();
 
     }
   }
@@ -609,7 +613,7 @@ struct MyApp : DistributedApp<State> {
 
 
 
-      cout << FPS().sec() << endl;
+      // cout << FPS().sec() << endl;
     }
 
     if (role() == DistributedApp::ROLE_RENDERER) {
@@ -810,12 +814,13 @@ int main() {
 
   // QUESTION for Andrés:
   //   does DistributedApp handle 'not opening audio io if it is renderer'
-  app.initAudio(SAMPLE_RATE, BLOCK_SIZE, 2, 0);
-  gam::Sync::master().spu(app.audioIO().fps());
+  // AC: I'm not sure, there's probably no checks, but there should be.
   if (app.role() == DistributedApp<State>::ROLE_RENDERER) {
     app.displayMode(Window::DEFAULT_BUF | Window::STEREO_BUF);
   } else {
     app.displayMode(Window::DEFAULT_BUF);
+    app.initAudio(SAMPLE_RATE, BLOCK_SIZE, 60, 0, 10);
+    gam::Sync::master().spu(app.audioIO().fps());
   }
   app.start();
 }
