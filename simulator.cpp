@@ -804,7 +804,7 @@ int main() {
 
   // QUESTION for Andrés:
   //   does DistributedApp handle 'not opening audio io if it is renderer'
-  app.initAudio(SAMPLE_RATE, BLOCK_SIZE, 2, 0);
+  app.initAudio(SAMPLE_RATE, BLOCK_SIZE, 60, 0);
   gam::Sync::master().spu(app.audioIO().fps());
   app.displayMode(Window::DEFAULT_BUF | Window::STEREO_BUF);
   app.start();
