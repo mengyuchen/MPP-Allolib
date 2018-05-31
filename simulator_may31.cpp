@@ -349,7 +349,7 @@ struct MyApp : DistributedApp<State> {
         // scene.setSpatializer<StereoPanner>(sl);
         SpeakerLayout sl = AlloSphereSpeakerLayout();
         scene.setSpatializer<Vbap>(sl);
-        scene.configureAudio(audioIO());
+        scene.prepare(audioIO());
 
     }
   }
