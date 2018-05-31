@@ -1,4 +1,5 @@
 ﻿#include "al/core/app/al_DistributedApp.hpp"
+#include "al/core/math/al_Vec.hpp"
 #include "agent_managers.hpp"
 #include "al/core/math/al_Quat.hpp"
 #include "al/core/spatial/al_Pose.hpp"
@@ -290,6 +291,9 @@ struct MyApp : DistributedApp<State> {
 
   // cameraMode
   int cameraSwitch = 0;
+  int minerIndex = 0;
+  int workerIndex = 0;
+  int capitalistIndex = 0;
 
   // shader
   // ShaderProgram shader;
@@ -361,7 +365,7 @@ struct MyApp : DistributedApp<State> {
     // common for both sim and ren
     {
       light.pos(0, 0, 0);  // place the light
-      nav().pos(0, 0, 50); // place the viewer //80
+      nav().pos(0, 0, 80); // place the viewer //80
 
       // background geom noise
       Mat4f xfm;
@@ -393,7 +397,8 @@ struct MyApp : DistributedApp<State> {
     }
   }
 
-  void simulator_system_update() {
+  void simulator_system_update(double dt) {
+
     // market
     marketManager.populationMonitor(capitalists, workers, miners, factories.fs);
     marketManager.capitalMonitor(capitalists, workers, miners, factories.fs);
@@ -525,8 +530,77 @@ struct MyApp : DistributedApp<State> {
   void onAnimate(double dt) override {
 
     if (role() == DistributedApp::ROLE_SIMULATOR) {
-      simulator_system_update();
+      simulator_system_update(dt);
       simulator_state_update();
+      
+        if (FPS().sec() > 0 && FPS().sec() < 30){
+            //nav().pos().lerp(Vec3f(0,0,0), FPS().sec() / 30.0f * dt);
+            nav().pos() = Vec3f(0,0,80) * (1 - FPS().sec() / 30.0f) +  Vec3f(0,0,0) * FPS().sec() / 30.0f;
+        } else if (FPS().sec() >= 30 && FPS().sec() < 40){
+
+        }
+        else if (FPS().sec() >= 40 && FPS().sec() < 60){
+            nav().pos() =  Vec3f(0,0,0) * (1 - (FPS().sec() - 40) / 20.0f) + factories.fs[0].position * (FPS().sec() - 40) / 20.0f;
+        }else if (FPS().sec() >= 60 && FPS().sec() < 65){
+
+        } else if (FPS().sec() >= 65 && FPS().sec() < 85){
+            nav().pos() =  factories.fs[0].position * (1 - (FPS().sec() - 65) / 20.0f) + NaturalResourcePts.nrps[0].position * (FPS().sec() - 65) / 20.0f;
+        }else if (FPS().sec() >= 85 && FPS().sec() < 90){
+
+        } else if (FPS().sec() >= 90 && FPS().sec() < 105){
+            nav().pos() =  NaturalResourcePts.nrps[0].position * (1 - (FPS().sec() - 90) / 15.0f) + metropolis.mbs[0].position * (FPS().sec() - 90) / 15.0f;
+        } else if (FPS().sec() >= 105 && FPS().sec() < 110){
+
+        } else if (FPS().sec() >= 110 && FPS().sec() < 140){
+            if (miners.ms[minerIndex].bankrupted() == false){
+                
+            } else {
+                if (minerIndex < miners.ms.size() - 1){
+                    minerIndex ++;
+                } else {
+                    minerIndex = 0;
+                }
+            }
+            nav().pos() = miners.ms[minerIndex].pose().pos() + Vec3f(0, 0, -4);
+            //nav().pos().lerp(miners.ms[minerIndex].pose().pos(), (FPS().sec() - 110)) / 30;
+        } else if (FPS().sec() >= 140 && FPS().sec() < 170){
+            if (workers.workers[workerIndex].bankrupted() == false){
+
+            } else {
+                if (workerIndex < workers.workers.size() - 1){
+                    workerIndex ++;
+                } else {
+                    workerIndex = 0;
+                }
+            }
+            nav().pos() = workers.workers[workerIndex].pose().pos() + Vec3f(0, 0, -4);
+            //nav().pos().lerp(workers.workers[workerIndex].pose().pos(), (FPS().sec() - 140)) / 15;
+        } else if (FPS().sec() >= 170 && FPS().sec() < 200){
+            if (capitalists.cs[capitalistIndex].bankrupted() == false){
+
+            } else {
+                if (capitalistIndex < capitalists.cs.size() - 1){
+                    capitalistIndex ++;
+                } else {
+                    capitalistIndex = 0;
+                }
+            }
+            nav().pos() = capitalists.cs[capitalistIndex].pose().pos() + Vec3f(0, 0, -4);
+            //nav().pos().lerp(capitalists.cs[capitalistIndex].pose().pos(), (FPS().sec() - 110)) / 15;
+        } else if (FPS().sec() >= 200 && FPS().sec() < 215){
+            nav().pos().lerp(Vec3f(0,0,40), (FPS().sec() - 200) / 15.0f);
+        } else if (FPS().sec() >= 215 && FPS().sec() < 240){
+            nav().pos() =  Vec3f(0,0,40) * (1 - (FPS().sec() - 215) / 25.0f) + Vec3f(24,12,8) * (FPS().sec() - 215) / 25.0f;
+        } else if (FPS().sec() >= 240 && FPS().sec() < 270){
+            nav().pos() =  Vec3f(24,12,8) * (1 - (FPS().sec() - 240) / 30.0f) + Vec3f(-12,-12,-6) * (FPS().sec() - 240) / 30.0f;
+        } else if (FPS().sec() >= 270 && FPS().sec() < 300){
+            nav().pos() =  Vec3f(-12,-12,-6) * (1 - (FPS().sec() - 270) / 30.0f) + Vec3f(0,0,0) * (FPS().sec() - 270) / 30.0f;
+        }
+
+
+
+
+      cout << FPS().sec() << endl;
     }
 
     if (role() == DistributedApp::ROLE_RENDERER) {
