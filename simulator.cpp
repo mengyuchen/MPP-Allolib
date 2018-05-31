@@ -8,7 +8,8 @@
 //#include "al/util/al_AlloSphereAudioSpatializer.hpp"
 #include "al/core/sound/al_AudioScene.hpp"
 #include "al/core/sound/al_StereoPanner.hpp"
-#include "al/core/sound/al_Vbap.hpp"
+//#include "al/core/sound/al_Vbap.hpp"
+#include "al/core/sound/al_Lbap.hpp"
 #include "al/util/al_AlloSphereSpeakerLayout.hpp"
 //#include "al/util/al_Simulator.hpp"
 //#include "alloGLV/al_ControlGLV.hpp"
@@ -342,8 +343,8 @@ struct MyApp : DistributedApp<State> {
         // scene.distanceAttenuation().attenuation(1);
 
       SpeakerLayout sl = AlloSphereSpeakerLayout();
-      scene.setSpatializer<Vbap>(sl);
-        scene.configureAudio(audioIO());
+      scene.setSpatializer<Lbap>(sl);
+        scene.prepare(audioIO());
 
     }
   }
