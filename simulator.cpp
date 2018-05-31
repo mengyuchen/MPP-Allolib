@@ -822,6 +822,7 @@ int main() {
     app.initAudio(SAMPLE_RATE, BLOCK_SIZE, 60, 0, 10);
     gam::Sync::master().spu(app.audioIO().fps());
   }
+
   app.start();
 }
 

@@ -539,7 +539,7 @@ struct Miner : Agent {
     gam::Osc<> sin;
     gam::Env<3> sinADR;
     gam::Accum<> sinTmr;
-    float sinDur = 0.3f;
+    float sinDur = 0.6f;
     float baseFreq = 180.0f;
     float periods[8] = {0.5,2,0.25,1.5,1.0, 2.5, 3.0, 4.0};
     float freqs[4] = {baseFreq * 1.6f, baseFreq * 2.4f, baseFreq *1.8f, baseFreq*1.2f};
