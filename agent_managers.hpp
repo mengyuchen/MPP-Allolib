@@ -11,7 +11,7 @@ struct Capitalist_Entity{
     float resourceUnitPrice = 280;
 
     Capitalist_Entity(){
-        initial_num = 15;
+        initial_num = 10;
         cs.resize(initial_num);
         cout << "Capitalist Entity Joined" << endl;
 
@@ -64,7 +64,7 @@ struct Capitalist_Entity{
                 // applyForce(ahb, c);
 
                 borderDetect(c);
-                inherentDesire(0.5, MetroRadius * 0.6, MetroRadius * 2, c.desireChangeRate, c);
+                inherentDesire(0.5, MetroRadius * 0.5, MetroRadius * 1, c.desireChangeRate, c);
                 if (i == 5){
                 //     //cout << c.movingTarget << " moving target"<< endl;
                 //     //cout << c.pose().quat().x << " " << c.pose().quat().y << " " << c.pose().quat().z << " " << c.pose().quat().w << " cRot"<< endl;
@@ -281,7 +281,7 @@ struct Worker_Union{
     bool drawingLinks;
 
     Worker_Union(){
-        initial_num = 75;
+        initial_num = 60;
         workers.resize(initial_num);
         lines.resize(workers.size());
         drawingLinks = true;
@@ -665,7 +665,7 @@ struct Miner_Group{
     int richCapitalistID = 0;
 
     Miner_Group(){
-        initial_num = 100;
+        initial_num = 90;
         ms.resize(initial_num);
         lines.resize(ms.size());
         drawingLinks = true;

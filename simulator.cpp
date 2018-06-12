@@ -344,7 +344,7 @@ struct MyApp : DistributedApp<State> {
 //            scene.insertFreeVoice(&worker);
             scene.triggerOn(&miner);
         }
-        scene.distanceAttenuation().farClip(12);
+        scene.distanceAttenuation().farClip(8);
         scene.distanceAttenuation().nearClip(0.001);
         scene.distanceAttenuation().law(ATTEN_INVERSE_SQUARE);
         // scene.distanceAttenuation().attenuation(1);
@@ -633,7 +633,7 @@ struct MyApp : DistributedApp<State> {
     if (role() == DistributedApp::ROLE_SIMULATOR) {
       simulator_system_update(dt);
       simulator_state_update();
-      scriptedAnimation();
+      //scriptedAnimation();
       //fps debug
       //cout << FPS().msec() << endl;
       // cout << FPS().sec() << endl;

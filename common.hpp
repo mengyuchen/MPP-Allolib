@@ -7,9 +7,9 @@ using namespace al;
 
 struct State{
     //general stats
-    float numMiners = 100;
-    float numCapitalists = 15;
-    float numWorkers = 75;
+    float numMiners = 90;
+    float numCapitalists = 10;
+    float numWorkers = 60;
     float numResources = 40 * 7;
     float phase = 0;
     int renderModeSwitch = 1;

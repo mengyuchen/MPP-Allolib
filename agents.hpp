@@ -2,8 +2,7 @@
 #define INCLUDE_AGENTS_HPP
 
 #include "al/core/app/al_App.hpp"
-#include "al/core/math/al_Quat.hpp"
-#include "al/core/spatial/al_Pose.hpp"
+// #include "synth.hpp"
 #include "helper.hpp"
 #include "agent_base.hpp"
 #include "locations.hpp"
@@ -21,6 +20,7 @@
 
 using namespace al;
 using namespace std;
+
 
 struct Capitalist : Agent{
 
@@ -43,32 +43,30 @@ struct Capitalist : Agent{
 
     //gamma effects
     //gam::LFO<> osc;
-    gam::SineD<> sine;
-
+    // gam::SineD<> sine;
 
     gam::Osc<> sin;
-        gam::Env<3> sinADR;
-        gam::Accum<> sinTmr;
-        float sinDur;
-        float baseFreq = 180.0f;
-        
-        
-        float periods[8] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-        //float periods[8] = {0.5,2,0.25,1.5,1.0, 4.0, 8.0, 3.0};
-        float freqs[4] = {baseFreq * 2.0f, baseFreq * 1.95f, baseFreq *1.8f, baseFreq*1.2f};
-        int index = 0;
-        int tmrIndex = 0;
+    gam::Env<3> sinADR;
+    gam::Accum<> sinTmr;
+    float sinDur;
+    float baseFreq = 180.0f;
+    
+    float periods[8] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+    //float periods[8] = {0.5,2,0.25,1.5,1.0, 4.0, 8.0, 3.0};
+    float freqs[4] = {baseFreq * 2.0f, baseFreq * 1.95f, baseFreq *1.8f, baseFreq*1.2f};
+    int index = 0;
+    int tmrIndex = 0;
 
-        //bigger control
-        // gam::Accum<> sinTmr2;
-        // gam::Env<3> ampEnv;
-        // gam::Accum<> ampTmr;
-        float shiftFreq;
-        float finalFreq;
+    //bigger control
+    // gam::Accum<> sinTmr2;
+    // gam::Env<3> ampEnv;
+    // gam::Accum<> ampTmr;
+    float shiftFreq;
+    float finalFreq;
 
-        //delay line
-        gam::Delay<float, gam::ipl::Trunc> delay;
-        float delayDur;
+    //delay line
+    gam::Delay<float, gam::ipl::Trunc> delay;
+    float delayDur;
 
     Capitalist(){
         //initial params
@@ -115,32 +113,48 @@ struct Capitalist : Agent{
         body.decompress();
         body.generateNormals();
   
-         //set up instrument
-        gam::ArrayPow2<float> tbSaw(2048);
+        //  //set up instrument
+        gam::ArrayPow2<float>
+        tbSaw(2048), tbSqr(2048), tbImp(2048), tbSin(2048), tbPls(2048),
+        tbOcean(2048), tbSizhu(2048), tb__3(2048), tb__4(2048);
+       
         gam::addSinesPow<1>(tbSaw, 9,1);
-
-        gam::ArrayPow2<float> tbSin(2048);
+        gam::addSinesPow<1>(tbSqr, 9,2);
+        gam::addSinesPow<0>(tbImp, 9,1);
         gam::addSine(tbSin);
 
-        gam::ArrayPow2<float> tbSqr(2048);
-        gam::addSinesPow<1>(tbSqr, 9,2);
-
-        gam::ArrayPow2<float> tbOcean(2048); //bowl sound
-        {    float A[] = {1, 0.4, 0.65, 0.3, 0.18, 0.08};
-        float C[] = {1,4,7,11,15,18};
-        gam::addSines(tbOcean, A,C,6);
+        {    float A[] = {1,1,1,1,0.7,0.5,0.3,0.1};
+            gam::addSines(tbPls, A,8);
         }
-        gam::ArrayPow2<float> tbSizhu(2048);
+
+        {    float A[] = {1, 0.4, 0.65, 0.3, 0.18, 0.08};
+            float C[] = {1,4,7,11,15,18};
+            gam::addSines(tbOcean, A,C,6);
+        }
+
+        // inharmonic partials
         {    float A[] = {0.5,0.8,0.7,1,0.3,0.4,0.2,0.12}; // harmonic amplitudes of series
-        float C[] = {3,4,7,8,11,12,15,16}; //cycles harmonic numbers of series
-        gam::addSines(tbSizhu, A,C,8); //8 is number of harmonics, same with array size above
+            float C[] = {3,4,7,8,11,12,15,16}; //cycles harmonic numbers of series
+            gam::addSines(tbSizhu, A,C,8); //8 is number of harmonics, same with array size above
+        }
+
+        // inharmonic partials
+        {    float A[] = {1, 0.7, 0.45, 0.3, 0.15, 0.08};
+            float C[] = {10, 27, 54, 81, 108, 135};
+            gam::addSines(tb__3, A,C,6);
+        }
+
+        // harmonics 20-27
+        {    float A[] = {0.2, 0.4, 0.6, 1, 0.7, 0.5, 0.3, 0.1};
+            gam::addSines(tb__4, A,8, 20);
         }
 
         //sin A
         sin.freq(20);
-        sin.source(tbSaw);
+        sin.source(tb__3);// saw
+        // sin.source(tbSin);
         sinDur = 0.25;
-        baseFreq = 120;
+        baseFreq = 120; //120 -> dangerous feeling
         shiftFreq = rnd::uniform(baseFreq / 3, baseFreq / 6);
 
         sinADR.levels(0,0.2,0.2,0);
@@ -178,7 +192,7 @@ struct Capitalist : Agent{
                     //sinADR.curve(-4);
                     //flucFreq = floor(al::rnd::uniform(5, 75));
                     //finalFreq = freqs[index] + shiftFreq + flucFreq;
-                    shiftFreq = capitalHoldings / 1000;
+                    shiftFreq = capitalHoldings / 2000;
                     finalFreq = freqs[index] + shiftFreq;
                     //cout << finalFreq << endl;
                     sin.freq(finalFreq);
@@ -305,48 +319,63 @@ struct Miner : Agent {
     // gam::Delay<float, gam::ipl::Trunc> delay;
     // float delayDur;
 
-    //bigger control
-    // gam::Accum<> sinTmr2;
-    // gam::Env<3> ampEnv;
-    // gam::Accum<> ampTmr;
     float shiftFreq;
     float finalFreq;
-    // float flucFreq;
-    // float oldFreq;
-    // float targetFreq;
+
+    //fm
+    gam::Sine<> mod, vib;
+    gam::Osc<> modEnv, vibEnv;
+    float modMul, vibFreq;
+
 
     Miner(){
-        //set up instrument
-        // gam::ArrayPow2<float> tbSaw(2048);
-        // gam::addSinesPow<1>(tbSaw, 9,1);
-
-        gam::ArrayPow2<float> tbSin(2048);
+    //     //set up instrument
+   gam::ArrayPow2<float>
+        tbSaw(2048), tbSqr(2048), tbImp(2048), tbSin(2048), tbPls(2048),
+        tbOcean(2048), tbSizhu(2048), tb__3(2048), tb__4(2048);
+       
+        gam::addSinesPow<1>(tbSaw, 9,1);
+        gam::addSinesPow<1>(tbSqr, 9,2);
+        gam::addSinesPow<0>(tbImp, 9,1);
         gam::addSine(tbSin);
 
-        gam::ArrayPow2<float> tbSqr(2048);
-        gam::addSinesPow<1>(tbSqr, 9,2);
+        {    float A[] = {1,1,1,1,0.7,0.5,0.3,0.1};
+            gam::addSines(tbPls, A,8);
+        }
 
-        gam::ArrayPow2<float> tbOcean(2048);
         {    float A[] = {1, 0.4, 0.65, 0.3, 0.18, 0.08};
-        float C[] = {1,4,7,11,15,18};
-        gam::addSines(tbOcean, A,C,6);
+            float C[] = {1,4,7,11,15,18};
+            gam::addSines(tbOcean, A,C,6);
         }
-        gam::ArrayPow2<float> tb__2(2048);
+
+        // inharmonic partials
         {    float A[] = {0.5,0.8,0.7,1,0.3,0.4,0.2,0.12}; // harmonic amplitudes of series
-        float C[] = {3,4,7,8,11,12,15,16}; //cycles harmonic numbers of series
-        gam::addSines(tb__2, A,C,8); //8 is number of harmonics, same with array size above
+            float C[] = {3,4,7,8,11,12,15,16}; //cycles harmonic numbers of series
+            gam::addSines(tbSizhu, A,C,8); //8 is number of harmonics, same with array size above
         }
+
+        // inharmonic partials
+        {    float A[] = {1, 0.7, 0.45, 0.3, 0.15, 0.08};
+            float C[] = {10, 27, 54, 81, 108, 135};
+            gam::addSines(tb__3, A,C,6);
+        }
+
+        // harmonics 20-27
+        {    float A[] = {0.2, 0.4, 0.6, 1, 0.7, 0.5, 0.3, 0.1};
+            gam::addSines(tb__4, A,8, 20);
+        }
+
 
         //sin A
         sin.freq(20);
-        sin.source(tbOcean);
+        sin.source(tbOcean); //tbocean
         sinDur = 1;
         baseFreq = 240;
         
         sinADR.levels(0,0.2,0.2,0);
         sinADR.lengths(sinDur/4,sinDur/2,sinDur/4);
         sinADR.curve(-4);
-        sinTmr.period(sinDur + rnd::uniform(0.45, 0.05));
+        sinTmr.period(sinDur + rnd::uniform(0.25, 0.05));
         //sinA baseFreqs
         shiftFreq = baseFreq * 0.5;
         finalFreq = baseFreq * 2 + shiftFreq;
@@ -460,7 +489,14 @@ struct Miner : Agent {
                     // flucFreq = floor(al::rnd::uniform(5, 75));
                     shiftFreq = resourceHoldings * 20;
                     // finalFreq = freqs[index] + shiftFreq + flucFreq;
-                    finalFreq = freqs[index] + shiftFreq;
+                    //finalFreq = freqs[index] + shiftFreq;
+
+                    //fm
+                    float carFreq = freqs[index] + shiftFreq;
+                    modMul = 0.5;
+                    modEnv.period(0.25);
+                    vib.freq(220);
+                    finalFreq = (carFreq + vib() * carFreq * 0.2) * 0.5 + modEnv() * carFreq * modMul;
                     sin.freq(finalFreq);
                     // sinTmr.period(periods[rnd::uniform(8,0)]);
                     if (index == 0){
@@ -469,15 +505,6 @@ struct Miner : Agent {
                         index = 0;
                     }
 
-
-
-
-                    //do an FM???
-
-
-
-
-                    
                     //targetFreq = freqs[index] + shiftFreq + flucFreq;
                     //oldFreq = finalFreq;
                 }
@@ -515,7 +542,14 @@ struct Miner : Agent {
                     // flucFreq = floor(al::rnd::uniform(5, 75));
                     // finalFreq = freqs[index] + shiftFreq + flucFreq;
                     shiftFreq = capitalHoldings / 10;
-                    finalFreq = freqs[index] + shiftFreq;
+
+                    float carFreq = freqs[index] + shiftFreq;
+                    modMul = 0.5;
+                    modEnv.period(1);
+                    vib.freq(vibEnv());
+                    finalFreq = freqs[index] + shiftFreq + modEnv() * carFreq * modMul;
+
+                    // finalFreq = freqs[index] + shiftFreq;
                     //cout << finalFreq << endl;
                     sin.freq(finalFreq);
                     //sinTmr.period(periods[rnd::uniform(0,4)]);
@@ -724,7 +758,7 @@ struct Worker : Agent {
         sin.source(tb__4);
         //sinDur = 4.0;
         sinDur = 0.5f;
-        baseFreq = 120;
+        baseFreq = 80;
         sinADR.levels(0,0.2,0.2,0);
         sinADR.lengths(sinDur/4, sinDur/2,sinDur/4);
         sinADR.curve(-4);
@@ -761,7 +795,7 @@ struct Worker : Agent {
                     sinTmr.period(sinDur);
                     //sinADR.curve(-4);
                     //flucFreq = floor(al::rnd::uniform(75, 10));
-                    shiftFreq = capitalHoldings / 30;
+                    shiftFreq = capitalHoldings / 40;
                     finalFreq = freqs[index] + shiftFreq;
 
                     index ++;
