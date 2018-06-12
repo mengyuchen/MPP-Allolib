@@ -10,6 +10,7 @@
 #include "al/core/sound/al_AudioScene.hpp"
 #include "al/core/sound/al_StereoPanner.hpp"
 #include "al/core/sound/al_Vbap.hpp"
+#include "al/core/sound/al_Dbap.hpp"
 #include "al/core/sound/al_Ambisonics.hpp"
 #include "al/core/sound/al_Lbap.hpp"
 #include "al/util/al_AlloSphereSpeakerLayout.hpp"
@@ -333,30 +334,37 @@ struct MyApp : DistributedApp<State> {
       for (auto &capitalist: capitalists.cs) {
 //            scene.insertFreeVoice(&capitalist);
             
-            //scene.triggerOn(&capitalist);
+            scene.triggerOn(&capitalist);
         }
         for (auto &worker: workers.workers) {
 //            scene.insertFreeVoice(&worker);
-            //scene.triggerOn(&worker);
+            scene.triggerOn(&worker);
         }
         for (auto &miner: miners.ms) {
 //            scene.insertFreeVoice(&worker);
-            //scene.triggerOn(&miner);
+            scene.triggerOn(&miner);
         }
         scene.distanceAttenuation().farClip(12);
-        scene.distanceAttenuation().nearClip(0.01);
+        scene.distanceAttenuation().nearClip(0.001);
         scene.distanceAttenuation().law(ATTEN_INVERSE_SQUARE);
         // scene.distanceAttenuation().attenuation(1);
 
-
         //distance is good, direction not sure, but better than stereo?
-        //SpeakerLayout sl = AlloSphereSpeakerLayout();
-        //auto spatializer = scene.setSpatializer<Lbap>(sl);
+        // SpeakerLayout sl = AlloSphereSpeakerLayout();
+        // auto spatializer = scene.setSpatializer<Lbap>(sl);
         
         //works but no direction
-        SpeakerLayout sl = StereoSpeakerLayout();
-        auto spatializer = scene.setSpatializer<StereoPanner>(sl);
+        // SpeakerLayout sl = StereoSpeakerLayout();
+        // SpeakerLayout sl = HeadsetSpeakerLayout(); // not much difference
+        //auto spatializer = scene.setSpatializer<StereoPanner>(sl);
         
+        //this doesn't work very well
+        //auto spatializer = scene.setSpatializer<Dbap>(sl);
+        
+        //this seems okay
+        SpeakerLayout sl = StereoSpeakerLayout();
+        auto spatializer = scene.setSpatializer<AmbisonicsSpatializer>(sl);
+
         //distance is good but facing direction is off?
         // SpeakerLayout sl = StereoSpeakerLayout();
         // auto spatializer = scene.setSpatializer<Lbap>(sl);
@@ -364,7 +372,6 @@ struct MyApp : DistributedApp<State> {
         //doesn't work with allospherelayout
         // SpeakerLayout sl = StereoSpeakerLayout();
         // auto spatializer = scene.setSpatializer<Vbap>(sl);
-
 
         scene.prepare(audioIO());
         audioIO().print();
@@ -552,85 +559,83 @@ struct MyApp : DistributedApp<State> {
     state().colorB = colorB;
     state().fogamount = fogamount;
   }
+  void scriptedAnimation(){       
+      //timed camera Movement and rendermode switch
+        if (FPS().sec() > 0 && FPS().sec() < 30){
+            //nav().pos().lerp(Vec3f(0,0,0), FPS().sec() / 30.0f * dt);
+            nav().pos() = Vec3f(0,0,80) * (1 - FPS().sec() / 30.0f) +  Vec3f(0,0,0) * FPS().sec() / 30.0f;
+        } else if (FPS().sec() >= 30 && FPS().sec() < 40){
+
+        }
+        else if (FPS().sec() >= 40 && FPS().sec() < 60){
+            nav().pos() =  Vec3f(0,0,0) * (1 - (FPS().sec() - 40) / 20.0f) + factories.fs[0].position * (FPS().sec() - 40) / 20.0f;
+        }else if (FPS().sec() >= 60 && FPS().sec() < 65){
+
+        } else if (FPS().sec() >= 65 && FPS().sec() < 85){
+            nav().pos() =  factories.fs[0].position * (1 - (FPS().sec() - 65) / 20.0f) + NaturalResourcePts.nrps[0].position * (FPS().sec() - 65) / 20.0f;
+        }else if (FPS().sec() >= 85 && FPS().sec() < 90){
+
+        } else if (FPS().sec() >= 90 && FPS().sec() < 105){
+            nav().pos() =  NaturalResourcePts.nrps[0].position * (1 - (FPS().sec() - 90) / 15.0f) + metropolis.mbs[0].position * (FPS().sec() - 90) / 15.0f;
+        } else if (FPS().sec() >= 105 && FPS().sec() < 110){
+            renderModeSwitch = 3;
+        } else if (FPS().sec() >= 110 && FPS().sec() < 140){
+            if (miners.ms[minerIndex].bankrupted() == false){
+                
+            } else {
+                if (minerIndex < miners.ms.size() - 1){
+                    minerIndex ++;
+                } else {
+                    minerIndex = 0;
+                }
+            }
+            nav().pos() = miners.ms[minerIndex].pose().pos() + Vec3f(0, 0, -4);
+            //nav().pos().lerp(miners.ms[minerIndex].pose().pos(), (FPS().sec() - 110)) / 30;
+        } else if (FPS().sec() >= 140 && FPS().sec() < 170){
+            if (workers.workers[workerIndex].bankrupted() == false){
+
+            } else {
+                if (workerIndex < workers.workers.size() - 1){
+                    workerIndex ++;
+                } else {
+                    workerIndex = 0;
+                }
+            }
+            nav().pos() = workers.workers[workerIndex].pose().pos() + Vec3f(0, 0, -4);
+            //nav().pos().lerp(workers.workers[workerIndex].pose().pos(), (FPS().sec() - 140)) / 15;
+        } else if (FPS().sec() >= 170 && FPS().sec() < 200){
+            if (capitalists.cs[capitalistIndex].bankrupted() == false){
+
+            } else {
+                if (capitalistIndex < capitalists.cs.size() - 1){
+                    capitalistIndex ++;
+                } else {
+                    capitalistIndex = 0;
+                }
+            }
+            nav().pos() = capitalists.cs[capitalistIndex].pose().pos() + Vec3f(0, 0, -4);
+            //nav().pos().lerp(capitalists.cs[capitalistIndex].pose().pos(), (FPS().sec() - 110)) / 15;
+        } else if (FPS().sec() >= 200 && FPS().sec() < 215){
+            renderModeSwitch = 1;
+            nav().pos().lerp(Vec3f(0,0,40), (FPS().sec() - 200) / 15.0f);
+        } else if (FPS().sec() >= 215 && FPS().sec() < 240){
+            nav().pos() =  Vec3f(0,0,40) * (1 - (FPS().sec() - 215) / 25.0f) + Vec3f(24,12,8) * (FPS().sec() - 215) / 25.0f;
+        } else if (FPS().sec() >= 240 && FPS().sec() < 270){
+            nav().pos() =  Vec3f(24,12,8) * (1 - (FPS().sec() - 240) / 30.0f) + Vec3f(-12,-12,-6) * (FPS().sec() - 240) / 30.0f;
+        } else if (FPS().sec() >= 270 && FPS().sec() < 300){
+            nav().pos() =  Vec3f(-12,-12,-6) * (1 - (FPS().sec() - 270) / 30.0f) + Vec3f(0,0,0) * (FPS().sec() - 270) / 30.0f;
+        }
+
+  }
 
   void onAnimate(double dt) override {
 
     if (role() == DistributedApp::ROLE_SIMULATOR) {
       simulator_system_update(dt);
       simulator_state_update();
-
+      scriptedAnimation();
       //fps debug
       //cout << FPS().msec() << endl;
-      
-    //   //timed camera Movement and rendermode switch
-    //     if (FPS().sec() > 0 && FPS().sec() < 30){
-    //         //nav().pos().lerp(Vec3f(0,0,0), FPS().sec() / 30.0f * dt);
-    //         nav().pos() = Vec3f(0,0,80) * (1 - FPS().sec() / 30.0f) +  Vec3f(0,0,0) * FPS().sec() / 30.0f;
-    //     } else if (FPS().sec() >= 30 && FPS().sec() < 40){
-
-    //     }
-    //     else if (FPS().sec() >= 40 && FPS().sec() < 60){
-    //         nav().pos() =  Vec3f(0,0,0) * (1 - (FPS().sec() - 40) / 20.0f) + factories.fs[0].position * (FPS().sec() - 40) / 20.0f;
-    //     }else if (FPS().sec() >= 60 && FPS().sec() < 65){
-
-    //     } else if (FPS().sec() >= 65 && FPS().sec() < 85){
-    //         nav().pos() =  factories.fs[0].position * (1 - (FPS().sec() - 65) / 20.0f) + NaturalResourcePts.nrps[0].position * (FPS().sec() - 65) / 20.0f;
-    //     }else if (FPS().sec() >= 85 && FPS().sec() < 90){
-
-    //     } else if (FPS().sec() >= 90 && FPS().sec() < 105){
-    //         nav().pos() =  NaturalResourcePts.nrps[0].position * (1 - (FPS().sec() - 90) / 15.0f) + metropolis.mbs[0].position * (FPS().sec() - 90) / 15.0f;
-    //     } else if (FPS().sec() >= 105 && FPS().sec() < 110){
-    //         renderModeSwitch = 3;
-    //     } else if (FPS().sec() >= 110 && FPS().sec() < 140){
-    //         if (miners.ms[minerIndex].bankrupted() == false){
-                
-    //         } else {
-    //             if (minerIndex < miners.ms.size() - 1){
-    //                 minerIndex ++;
-    //             } else {
-    //                 minerIndex = 0;
-    //             }
-    //         }
-    //         nav().pos() = miners.ms[minerIndex].pose().pos() + Vec3f(0, 0, -4);
-    //         //nav().pos().lerp(miners.ms[minerIndex].pose().pos(), (FPS().sec() - 110)) / 30;
-    //     } else if (FPS().sec() >= 140 && FPS().sec() < 170){
-    //         if (workers.workers[workerIndex].bankrupted() == false){
-
-    //         } else {
-    //             if (workerIndex < workers.workers.size() - 1){
-    //                 workerIndex ++;
-    //             } else {
-    //                 workerIndex = 0;
-    //             }
-    //         }
-    //         nav().pos() = workers.workers[workerIndex].pose().pos() + Vec3f(0, 0, -4);
-    //         //nav().pos().lerp(workers.workers[workerIndex].pose().pos(), (FPS().sec() - 140)) / 15;
-    //     } else if (FPS().sec() >= 170 && FPS().sec() < 200){
-    //         if (capitalists.cs[capitalistIndex].bankrupted() == false){
-
-    //         } else {
-    //             if (capitalistIndex < capitalists.cs.size() - 1){
-    //                 capitalistIndex ++;
-    //             } else {
-    //                 capitalistIndex = 0;
-    //             }
-    //         }
-    //         nav().pos() = capitalists.cs[capitalistIndex].pose().pos() + Vec3f(0, 0, -4);
-    //         //nav().pos().lerp(capitalists.cs[capitalistIndex].pose().pos(), (FPS().sec() - 110)) / 15;
-    //     } else if (FPS().sec() >= 200 && FPS().sec() < 215){
-    //         renderModeSwitch = 1;
-    //         nav().pos().lerp(Vec3f(0,0,40), (FPS().sec() - 200) / 15.0f);
-    //     } else if (FPS().sec() >= 215 && FPS().sec() < 240){
-    //         nav().pos() =  Vec3f(0,0,40) * (1 - (FPS().sec() - 215) / 25.0f) + Vec3f(24,12,8) * (FPS().sec() - 215) / 25.0f;
-    //     } else if (FPS().sec() >= 240 && FPS().sec() < 270){
-    //         nav().pos() =  Vec3f(24,12,8) * (1 - (FPS().sec() - 240) / 30.0f) + Vec3f(-12,-12,-6) * (FPS().sec() - 240) / 30.0f;
-    //     } else if (FPS().sec() >= 270 && FPS().sec() < 300){
-    //         nav().pos() =  Vec3f(-12,-12,-6) * (1 - (FPS().sec() - 270) / 30.0f) + Vec3f(0,0,0) * (FPS().sec() - 270) / 30.0f;
-    //     }
-
-
-
-
       // cout << FPS().sec() << endl;
     }
 
